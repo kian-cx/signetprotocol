@@ -1,0 +1,20 @@
+Signet — Protocolo de comunicación entre agentes
+Copyright (c) 2026 Kian Zamorano
+
+Autor original y creador del protocolo Signet: Kian Zamorano.
+
+Este producto incluye:
+  - La especificación Signet (spec/), bajo CC BY 4.0.
+  - Una implementación de referencia (reference/), bajo Apache License 2.0.
+
+MARCA: las licencias anteriores cubren la especificación y el código fuente.
+NO conceden ningún derecho sobre el nombre "Signet" ni sobre logotipos
+asociados, que quedan reservados por el autor. Una implementación de terceros
+puede declararse "compatible con Signet" pero no puede usar el nombre de forma
+que sugiera respaldo o afiliación oficial.
+
+SIN GARANTÍA: esta especificación y su implementación de referencia se ofrecen
+"TAL CUAL" (AS IS), sin garantía de ningún tipo. NO han sido auditadas por
+terceros. Quien las implemente DEBE realizar su propia auditoría de seguridad,
+en particular del manejo de claves Ed25519 y del almacenamiento de la clave
+privada.
