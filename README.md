@@ -1,78 +1,83 @@
 # Signet
 
-**Un protocolo abierto para que el agente de una persona o negocio pueda hablar con el agente de otra** — con identidad criptográfica, consentimiento del dueño, y sin que el canal pertenezca a ningún proveedor de modelos.
+**Un protocolo abierto para que el agente de una persona o negocio pueda hablar con el agente de otra** — con identidad criptográfica, consentimiento del dueño *en el servidor*, body cifrado frente al Relay, y un nombre que no queda preso de un registry plano.
 
 > Los agentes de IA son brillantes hacia adentro y **mudos hacia afuera**. Signet les da el canal que les falta.
 
-**Estado:** `v0.1 · DRAFT` — especificación estable en su núcleo, sujeta a cambios antes de la v1.0.
+**Estado:** `v0.2 · DRAFT` — endurece v0.1. Sujeto a cambios antes de la v1.0.
 
 ---
 
-## No compite con MCP ni con A2A
+## No compite con MCP, A2A ni ANP
 
-Signet opera en una **capa distinta** y está diseñado para apoyarse en ellos.
+Signet opera en una **capa distinta**. Comparativo largo: [spec/COMPARE.md](spec/COMPARE.md).
 
 | Protocolo | Responde | Relación con Signet |
 |---|---|---|
 | **MCP** | *Cómo* un agente invoca una herramienta, bajo **una** autoridad | Se usa **después** de que llega una intención consentida |
 | **A2A** | *Cómo* dos agentes coordinan una tarea | Puede transportar la intención; Signet aporta **de quién es** y **si consintió** |
-| **Signet** | *Quién* habla, *si el dueño aceptó*, *con qué nivel* | — |
+| **ANP** | Identidad DID + discovery + mensajería en red abierta | Vecino más cercano. Signet es más estrecho: consentimiento y entrega |
+| **Signet** | *Quién* habla, *si el dueño aceptó a ambos lados*, *con qué nivel* | — |
 
-Nada de lo anterior deja de funcionar si adoptas Signet, y Signet no te obliga a abandonar nada. **El sobre firmado no contiene modelo, proveedor ni marca** — precisamente para poder viajar dentro de la infraestructura de otros.
+El sobre firmado **no contiene modelo, proveedor ni marca**.
 
 ---
 
-## Los cinco primitivos
+## Los primitivos (v0.2)
 
-1. **Identidad** — un `handle` anclado a una clave pública Ed25519. La privada nunca sale del cliente.
-2. **Sesión** — no declaras un nombre: **firmas un reto** de un solo uso.
-3. **Mensaje firmado** — de punta a punta, sobre una forma canónica determinista, con ventana temporal y nonce.
-4. **Compuerta de confianza** — solo se entrega si existe un contacto **aceptado**. La puerta se abre desde adentro.
-5. **Bitácora firmada** — cadena de hashes con checkpoint de cabeza: borrar el final es **detectable**.
+1. **Identidad federable** — `alice@relay.example` anclada a Ed25519 (firma) + X25519 (cifrado). TOFU. La privada no sale del cliente.
+2. **Sesión** — firmas un reto de un solo uso, no declaras un nombre.
+3. **Mensaje firmado + cifrado** — JCS (RFC 8785), ventana temporal, nonce CSPRNG, `signet-box-v1` para DM y request.
+4. **Doble compuerta** — entrada: contacto `accepted`. Salida: `consent_token` de un solo uso verificado en el servidor, atado al `body_sha256`.
+5. **Bitácora firmada** — cadena de hashes con checkpoint de cabeza.
+6. **Ciclo de vida** — rotación, revocación, delegación con techo L2.
 
-## El sobre que se firma
+## El sobre v2
 
 ```
-sign([ "aether-msg-v1", from, to, kind, body,
-       created_at, nonce, canonicalJSON(payload) ])
+sign([ "signet-msg-v2", from, to, kind, created_at, nonce,
+       jcs(payload), body_sha256, jcs(box), consent_id ])
 ```
 
-El orden es **normativo**. Cambiarlo rompe la interoperabilidad aunque la criptografía sea correcta.
-
-> Las cadenas `aether-msg-v1` / `aether-session-v1` son **tokens de versión opacos**, sin significado de marca. Se conservan porque forman parte del array firmado.
+`aether-msg-v1` se acepta en ventana de dual-accept y queda deprecado. El orden es normativo.
 
 ---
 
 ## Empieza
 
-- **[Especificación completa](spec/SPEC.md)** — RFC 2119, con sus límites declarados.
-- **[Cliente de referencia](reference/signet-client.mjs)** — el protocolo completo en **85 líneas, sin una sola dependencia externa**.
-- **[Vectores de prueba](test-vectors/)** — para implementar en cualquier lenguaje sin preguntarle nada a nadie.
+- **[Especificación](spec/SPEC.md)** — RFC 2119, con límites declarados.
+- **[Contrato del Relay](spec/RELAY.md)** — cada `action` y cada código de error.
+- **[Comparativo](spec/COMPARE.md)** — MCP / A2A / ANP / colisión de nombre.
+- **[Cliente](reference/signet-client.mjs)** y **[Relay](reference/signet-relay.mjs)** de referencia, cero dependencias externas.
+- **[Vectores de prueba](test-vectors/v2.json)** — firmas, JCS y box reproducibles.
 
 ```
-(0) Genera un par de claves Ed25519
-(1) register         → reclama tu handle con la clave pública
-(2) session_start    → el servidor te devuelve un reto
-(3) firma el reto
-(4) session_complete → sesión verificada
-(5) send             → mensaje firmado (requiere contacto aceptado)
-(6) fetch            → recibe, con cursor y sin duplicados
+node reference/signet-relay.mjs          # http://localhost:8787
+node reference/signet-client.mjs register --handle alice
+node reference/signet-client.mjs register --handle bob
+node reference/signet-client.mjs trust    --handle alice --to bob
+node reference/signet-client.mjs accept   --handle bob --from alice
+node reference/signet-client.mjs send     --handle alice --to bob --body "hola"
+node reference/signet-client.mjs poll     --handle bob
+node test-vectors/verify.mjs
 ```
 
 ---
 
 ## Lo que Signet NO hace
 
-- **No prueba que una persona concreta actuó.** Prueba que *la clave K firmó el mensaje M*. Atar esa clave a una persona real es confianza-en-primer-uso, no criptografía.
-- **No ejecuta nada.** Entrega intenciones; quien las recibe decide si actúa.
-- **No interpreta el contenido.** El cuerpo es texto opaco.
+- **No prueba que una persona concreta actuó.** Prueba que *la clave K firmó el sobre M*.
+- **No ejecuta nada.** Entrega intenciones.
+- **No interpreta el contenido.** El body es opaco.
+- **No es una red P2P todavía.** El formato `local@relay` es obligatorio; el reenvío inter-relay es OPTIONAL.
+- **No es MLS.** El box es X25519+ChaCha20-Poly1305 sin forward secrecy.
 
 ---
 
 ## Licencias
 
-- **Especificación** (`spec/`) — [CC BY 4.0](LICENSE-SPEC): libre de copiar e implementar **con atribución al autor**.
-- **Código** (`reference/`) — [Apache 2.0](LICENSE): incluye concesión expresa de patentes.
+- **Especificación** (`spec/`) — [CC BY 4.0](LICENSE-SPEC).
+- **Código** (`reference/`, `test-vectors/*.mjs`) — [Apache 2.0](LICENSE).
 
 Las licencias **no** conceden derechos sobre la marca **Signet**. Ver [NOTICE](NOTICE).
 
