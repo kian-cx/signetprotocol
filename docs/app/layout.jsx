@@ -33,7 +33,7 @@ export default async function RootLayout({ children }) {
         <Layout
           banner={<Banner storageKey="signet-beta-1">Signet SDK 0.1 is in beta: the API may change. Your translators are welcome!</Banner>}
           navbar={
-            <Navbar logo={logo} projectLink="https://github.com/kian-cx/signetprotocol">
+            <Navbar logo={logo} projectLink="https://github.com/signetprotocol/signetprotocol">
               {/* Estrellas de GitHub en vivo y selector claro / oscuro / sistema (visibles también en el móvil). */}
               <GitHubStars />
               <ThemeSwitch lite />

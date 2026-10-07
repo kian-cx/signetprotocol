@@ -75,8 +75,8 @@ Where to talk:
 
 | What | Where |
 |---|---|
-| Questions, ideas, "how should we run this?" | [GitHub Discussions](https://github.com/kian-cx/signetprotocol/discussions) |
-| Bugs and concrete proposals | [Issues](https://github.com/kian-cx/signetprotocol/issues/new/choose) |
+| Questions, ideas, "how should we run this?" | [GitHub Discussions](https://github.com/signetprotocol/signetprotocol/discussions) |
+| Bugs and concrete proposals | [Issues](https://github.com/signetprotocol/signetprotocol/issues/new/choose) |
 | News and direct contact with the maintainer | [@kian_cx on X](https://x.com/kian_cx) |
 
 Start with [CONTRIBUTING.md](CONTRIBUTING.md). Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md). For security problems, see [SECURITY.md](SECURITY.md).

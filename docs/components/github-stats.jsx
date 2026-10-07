@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react'
 
-const REPO = 'kian-cx/signetprotocol'
+const REPO = 'signetprotocol/signetprotocol'
 const URL_REPO = `https://github.com/${REPO}`
 const TTL = 10 * 60 * 1000
 const CLAVE = 'signet-github-stats'
