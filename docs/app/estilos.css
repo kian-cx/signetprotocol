@@ -47,10 +47,17 @@
 
 .mv-logo {
   display: inline-flex;
-  align-items: baseline;
-  gap: 0.4rem;
+  align-items: center;
+  gap: 0.6rem;
   font-size: 1.05rem;
   letter-spacing: -0.01em;
+}
+.mv-logo-mark {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+.mv-logo b {
+  font-weight: 500;
 }
 .mv-logo-sdk {
   font-size: 0.65rem;

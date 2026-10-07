@@ -3,10 +3,17 @@ import { Banner, Head, Search } from 'nextra/components'
 import { GitHubStars } from '../components/github-stats'
 import { VisitorCounter } from '../components/visitas'
 import { getPageMap } from 'nextra/page-map'
+import { Geist_Mono } from 'next/font/google'
 import 'nextra-theme-docs/style.css'
 import './estilos.css'
 
+const geistMono = Geist_Mono({ subsets: ['latin'], weight: ['500'], display: 'swap' })
+
 export const metadata = {
+  metadataBase: new URL('https://signetprotocol.io'),
+  icons: { icon: '/favicon.svg', apple: '/apple-touch-icon.png' },
+  openGraph: { images: ['/og.png'], siteName: 'Signet Protocol', type: 'website' },
+  twitter: { card: 'summary_large_image', images: ['/og.png'] },
   title: {
     default: 'Signet Protocol',
     template: '%s · Signet Protocol'
@@ -15,9 +22,14 @@ export const metadata = {
 }
 
 const logo = (
-  <span className="mv-logo">
-    <b>Signet</b>
-    <span className="mv-logo-sdk">PROTOCOL</span>
+  <span className={`mv-logo ${geistMono.className}`}>
+    <svg className="mv-logo-mark" viewBox="0 0 18 18" aria-hidden="true" fill="currentColor">
+      <rect x="0" y="0" width="5" height="4" />
+      <rect x="0" y="7" width="5" height="4" />
+      <rect x="0" y="14" width="5" height="4" />
+      <rect x="8" y="0" width="10" height="18" />
+    </svg>
+    <b>signet</b>
   </span>
 )
 
