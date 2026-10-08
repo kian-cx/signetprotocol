@@ -2,7 +2,7 @@
 
 Signet Protocol is a young open project. Today it has **one maintainer**, [@kian-cx](https://github.com/kian-cx) ([X](https://x.com/kian_cx)), who owns the name and has the final say while the community forms. The goal is to grow the maintainer group and share decisions as people contribute regularly.
 
-This document is a starting point and is open to change: if you think we should run the project differently, open a [Discussion](https://github.com/signetprotocol/signetprotocol/discussions) and propose it.
+This document is a starting point and is open to change: if you think we should run the project differently, open a [Discussion](https://github.com/signetprotocol/signet/discussions) and propose it.
 
 ## Roles
 

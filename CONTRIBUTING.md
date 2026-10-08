@@ -12,7 +12,7 @@ By taking part you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 - **Documentation and translations** of it (`docs/content`).
 - **Protocol proposals** (see [GOVERNANCE.md](GOVERNANCE.md)).
 
-Not sure where to start? Look for issues labelled `good first issue`, or ask in [Discussions](https://github.com/signetprotocol/signetprotocol/discussions).
+Not sure where to start? Look for issues labelled `good first issue`, or ask in [Discussions](https://github.com/signetprotocol/signet/discussions).
 
 ## How to contribute
 
@@ -41,7 +41,7 @@ Signet/1 only grows with **optional fields that have a default value**, so older
 
 ## Contact
 
-- Questions and ideas: [GitHub Discussions](https://github.com/signetprotocol/signetprotocol/discussions)
+- Questions and ideas: [GitHub Discussions](https://github.com/signetprotocol/signet/discussions)
 - Maintainer on X: [@kian_cx](https://x.com/kian_cx)
 
 ## License

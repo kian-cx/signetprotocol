@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: Question or idea
-    url: https://github.com/signetprotocol/signetprotocol/discussions
+    url: https://github.com/signetprotocol/signet/discussions
     about: Ask questions, share ideas and talk about how we build this together.
   - name: Maintainer on X
     url: https://x.com/kian_cx

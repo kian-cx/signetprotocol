@@ -8,7 +8,7 @@ import { Callout } from 'nextra/components'
 # Intents, archetypes and translation profiles
 
 <Callout type="warning">
-**Draft proposal, not part of Signet/1.** Nothing here is implemented yet. Names, fields and the API are a sketch to discuss. Open a [discussion](https://github.com/signetprotocol/signetprotocol/discussions) or an issue with the `protocol` label to give feedback.
+**Draft proposal, not part of Signet/1.** Nothing here is implemented yet. Names, fields and the API are a sketch to discuss. Open a [discussion](https://github.com/signetprotocol/signet/discussions) or an issue with the `protocol` label to give feedback.
 </Callout>
 
 Download the full design document as a PDF: [Signet 2 architecture (PDF)](/signet-2-architecture.pdf). The companion tool is described in [Signet Forge](/forge/).
@@ -141,6 +141,6 @@ Signet/1 is append-only, so the first step can be additive: an optional `capabil
 
 - The server still needs a canonical physics. Intents do not remove that. What is the minimum a motion profile must capture?
 - How do we measure a motion profile in a game that does not report positions?
-- Who maintains the intent vocabulary and the archetype catalog, and how are new entries accepted? (See [governance](https://github.com/signetprotocol/signetprotocol/blob/main/GOVERNANCE.md).)
+- Who maintains the intent vocabulary and the archetype catalog, and how are new entries accepted? (See [governance](https://github.com/signetprotocol/signet/blob/main/GOVERNANCE.md).)
 - Where does the resolver run: the player's machine, a shared service, or only in the development tool?
 - How are conflicting community profiles for the same game resolved?
