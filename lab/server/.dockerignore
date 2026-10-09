@@ -1,0 +1,6 @@
+target
+.git
+*.json
+*.pcap
+*.txt
+!worlds/*.txt

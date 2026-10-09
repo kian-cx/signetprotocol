@@ -1,0 +1,34 @@
+# Signet world: a small plaza. Universal metres, Y up, the shared spawn is the origin, the ground's top is y 0.
+# box x1 y1 z1 x2 y2 z2 <material in plain words>   (later boxes win where they overlap)
+# Every game paints these materials its own way (Minecraft: one block per material, chosen in Signet Forge).
+name Signet plaza
+
+box -80 -8 -80   80 -4 80   grey stone rock
+box -80 -4 -80   80 -1 80   brown soil dirt
+box -80 -1 -80   80  0 80   green grass lawn
+
+# the plaza where everyone appears
+box -10 -1 -10   10  0 10   light grey polished concrete pavement
+box  -1 -1  -1    1  0  1   white marble tile
+
+# a pond
+box -28 -3 12   -16  0 24   clear blue water
+
+# a small wooden house, door facing the plaza (west wall, z -1..1 open)
+box  16 -1 -5    24  0  5   oak wood plank floor
+box  16  0 -5    24  4 -4   oak wood plank wall
+box  16  0  4    24  4  5   oak wood plank wall
+box  23  0 -4    24  4  4   oak wood plank wall
+box  16  0 -4    17  4 -1   oak wood plank wall
+box  16  0  1    17  4  4   oak wood plank wall
+box  16  3 -1    17  4  1   oak wood plank wall
+box  15  4 -6    25  5  6   dark red clay roof tiles
+
+# two trees
+box  30  0 30    31  5 31   oak tree trunk bark
+box  28  4 28    33  7 33   green tree leaves
+box -31  0 -31  -30  6 -30  birch tree trunk white bark
+box -33  5 -33  -28  8 -28  green tree leaves
+
+# a stone path to the house
+box  10 -1 -1    16  0  1   grey cobblestone path

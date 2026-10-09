@@ -1,0 +1,26 @@
+{
+ "rows": 5893,
+ "train": 5493,
+ "held": 400,
+ "epochs": 2.0,
+ "lora_r": 64,
+ "train_runtime_s": 331.648,
+ "train_loss": 1.4562499897424566,
+ "peak_vram_gib": 3.12,
+ "calibration": {
+  "accuracy": 0.68,
+  "ece": 0.02830121010541916,
+  "loss": 1.6491973789595067,
+  "record_accuracy": 0.68,
+  "fitted_types": [
+   0
+  ]
+ },
+ "held_out": {
+  "accuracy": 0.68,
+  "ece": 0.0290499593317509,
+  "loss": 1.649287460371852,
+  "record_accuracy": 0.68
+ },
+ "total_s": 358
+}

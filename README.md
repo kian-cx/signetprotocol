@@ -19,6 +19,8 @@ This repository contains the SDK to write those translators, plus the clients an
 | C# (Unity / .NET) on top of the C interface | `bindings/csharp` | preview |
 | TypeScript / Node (`@signet/sdk`): types and a client without prediction | `bindings/typescript` | preview |
 | Dedicated server (Docker) | `servidor` | beta |
+| Lab doors server (Minecraft, Garry's Mod, Lethal Company) and its line protocol | `lab/server` | lab |
+| Signet Forge decision model (Qwen3.5-0.8B distilled from Clef) | `models/signet-forge-dm-qwen35-0.8b-clef-distill-v1` | lab |
 | Documentation (Next.js) | `docs` | beta |
 
 ## Five minutes

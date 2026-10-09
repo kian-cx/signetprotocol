@@ -2,6 +2,11 @@
 
 All notable changes are listed here. The SDK follows [Semantic Versioning](https://semver.org/) once it leaves beta. The wire protocol is versioned separately: **Signet/1** only grows with optional fields.
 
+## Unreleased
+
+- **Lab doors server** in `lab/server`: one binary, `signet`, with `server`, `link` and `forge`. Shared world in metres, one door per game, Forge asked on localhost. This wire is not the SDK Signet/1 protocol in `crates/signet-sdk`.
+- **Decision model** `signet-forge-dm-qwen35-0.8b-clef-distill-v1`: Qwen3.5-0.8B with Clef's joint head, distilled from Clef 27B. Weights via Git LFS. Model card in that directory. The Forge page on the site points at it.
+
 ## 0.1.0-beta.1 · 2026-10-04
 
 First public release.

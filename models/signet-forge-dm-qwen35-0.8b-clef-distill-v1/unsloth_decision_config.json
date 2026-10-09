@@ -1,0 +1,13 @@
+{
+  "layout": "clef",
+  "max_len": 4096,
+  "temperature": [
+    0.9999596476554871,
+    1.0,
+    1.0
+  ],
+  "base_model": "/home/kian/clm-bench/clef/student/Qwen3.5-0.8B",
+  "load_in_4bit": false,
+  "fine_tuned": true,
+  "folded_temperature": 0.5310335159301758
+}
