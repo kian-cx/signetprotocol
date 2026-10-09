@@ -20,7 +20,7 @@ Before any of that, the game must pass the rules check on its game card.
 
 ## 0. Game card: may we do it at all?
 
-`python3 ~/clm-bench/catalog_kit.py` writes `catalogs/card_<game>.json`, which Signet Forge Catalog shows at step 2.
+The catalog tool writes `catalogs/card_<game>.json`, which Signet Forge Catalog shows at step 2.
 The card's **tier** decides the path:
 
 | Tier | Meaning | Way in |
@@ -41,16 +41,16 @@ Rules for every game:
 from this list when it decides how this game draws things from other games.
 
 **How it is made:**
-1. Signet Forge Catalog runs a **reader for the game's engine**: `~/clm-bench/readers/<engine>.py`, contract in
+1. Signet Forge Catalog runs a **reader for the game's engine**: `readers/<engine>.py`, contract in
    `readers/CONTRACT.md`.
-2. It writes `~/clm-bench/catalogs/catalog_<game>.json`.
+2. It writes `catalogs/catalog_<game>.json` in the data directory, not in this repository.
 3. Hand descriptions go in `catalogs/descriptions_<game>.json`.
 
 A new engine needs a new reader. The reader must pass `python -m readers.check readers/<x>.py "<Game>"` before it is
 used.
 
 ```bash
-cd ~/clm-bench && uv run --no-project --python 3.13 --offline --with UnityPy --with rich python signet_catalog.py
+signet setup --role client --games <game>
 ```
 
 **Kinds Signet Forge asks for:**
@@ -103,7 +103,7 @@ and the card's tier decides what it is:
 
 | Way in | Example | What we write |
 |---|---|---|
-| **Our own server** speaking the game's protocol | Minecraft: `~/minecraft-signet/proto` (Rust, `localhost:25568`) | A minimal server: login, chunks, entities, block events, and a text bridge to the door |
+| **Our own server** speaking the game's protocol | Minecraft: a proto on `localhost:25568`, bridge `127.0.0.1:7790` | A minimal server: login, chunks, entities, block events, and a text bridge to the door |
 | **The game's dedicated server plus an addon**, using the game's official mod API | GMod: srcds on 127.0.0.1 with `sv_lan 1`, plus the Lua addon `gmod/signet` | The addon (polls the door, spawns props and boxes, reports players and the physgun) and the launcher `gmod/run_server.sh` |
 | **Emulated host** (tier B) | Lethal Company: `src/doors/lc.rs` is the host on UDP 7777 | A transport/netcode adapter (`utp.rs`, `ngo.rs`) and a host script built from a capture of our own LAN game |
 

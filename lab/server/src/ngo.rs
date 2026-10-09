@@ -1,5 +1,5 @@
 //! Unity Netcode for GameObjects (NGO) wire format: batches of messages (magic 0x1160, xxh64 of the body) and the
-//! BytePacker variable-length integers. Same layout our LC bot reads and writes (~/lc-analisis/bot/lcbot.py).
+//! BytePacker variable-length integers, the same layout a Lethal Company client already speaks.
 
 pub const CONNECTION_APPROVED: u32 = 0;
 pub const CONNECTION_REQUEST: u32 = 1;

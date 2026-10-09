@@ -1,0 +1,5 @@
+# Forge environment, installed only by: signet setup --role client --install-python
+# The decision model is downloaded separately (--download), about 1.8 GB.
+rich
+torch
+transformers

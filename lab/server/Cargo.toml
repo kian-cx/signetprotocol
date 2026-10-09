@@ -5,4 +5,6 @@ edition = "2021"
 publish = false
 description = "Signet: one shared world, one door per game, and the local decision screen"
 
+[workspace]
+
 [dependencies]

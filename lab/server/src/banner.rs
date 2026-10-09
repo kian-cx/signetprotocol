@@ -1,4 +1,4 @@
-//! The Signet logo and banner for the terminal (the Python twin is ~/clm-bench/signet_banner.py).
+//! The Signet logo and banner for the terminal.
 //! The logo is the SVG itself: a 18x18 grid, three small bars on the left and a tall block on the right, #ecebe6 on
 //! #0b0b0b. Each terminal cell is one unit wide and two units tall (▀ ▄ █), so the proportions stay those of the SVG.
 use std::io::IsTerminal;

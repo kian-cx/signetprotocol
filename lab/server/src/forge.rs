@@ -56,7 +56,7 @@ impl Forge {
                     }
                     Err(_) if !warned => {
                         crate::log("forge", &format!("Signet Forge is not running at {addr}: neutral defaults until it starts \
-                                                      (cd ~/clm-bench && HF_HUB_OFFLINE=1 clef/.venv-unsloth/bin/python signet_forge.py)"));
+                                                      (signet forge, after signet setup --role client)"));
                         warned = true;
                     }
                     Err(_) => {}

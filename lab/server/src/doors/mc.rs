@@ -1,4 +1,4 @@
-//! Minecraft door. Our Rust proto (~/minecraft-signet/proto) already is a Minecraft server; this door talks to it over
+//! Minecraft door. A proto you run (not shipped here) is the Minecraft server; this door talks to it over
 //! its local bridge (127.0.0.1:7790, text lines):
 //!   proto -> door: "MC x y z yaw moving" (the Minecraft player), "MCEV place|break|hold|chat|sneak ..." (its actions)
 //!   door -> proto: "SPAWN eid minecraft:<creature> x y z yaw label" / "MOVE eid x y z yaw" / "REMOVE eid":

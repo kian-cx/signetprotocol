@@ -8,7 +8,8 @@
 //!       Runs on each player's PC, next to their game: the doors (local only, 127.0.0.1) plus the uplink to a Server.
 //!       Without --server it is a self-contained local world (both doors on one PC).
 //!   signet forge [--port 7796] [--debug]
-//!       The decision screen for this PC. Same process name; the model still lives in ~/clm-bench (Python, GPU).
+//!       The decision screen for this PC. Python and the model come from `signet setup`, not from a fixed path.
+//!   signet setup --role server|client|both [--download] [--install-python] [--games minecraft,gmod,lethal]
 //!   (no mode = link without --server)
 //!
 //! The tunnel is the user's choice: put the Server where you like and reach it through your own VPN (OpenVPN,
@@ -17,6 +18,7 @@ mod banner;
 mod doors;
 mod forge;
 mod net;
+mod setup;
 mod stop;
 mod ngo;
 mod utp;
@@ -62,24 +64,19 @@ fn load_world(world: &std::sync::Arc<world::World>, path: Option<String>) {
 }
 
 fn usage() {
+    eprintln!("signet setup  --role server|client|both [--download] [--install-python] [--games minecraft,gmod,lethal]");
     eprintln!("signet server [--bind 127.0.0.1:7800] [--world FILE|none]");
     eprintln!("signet link   [--server HOST:7800] [--name NAME] [--no-mc] [--no-lc] [--gmod] [--no-forge]");
     eprintln!("signet forge  [--port 7796] [--debug]");
     eprintln!("no mode starts a local link (doors on this PC, no Server)");
 }
 
-/// Signet Forge is the Python screen and the GPU model in ~/clm-bench. This binary is the one you run.
+/// The Forge screen named by setup (or SIGNET_PYTHON and SIGNET_FORGE).
 fn exec_forge(rest: &[String]) -> ! {
-    let home = std::env::var("HOME").unwrap_or_default();
-    let script = std::env::var("SIGNET_FORGE").unwrap_or(format!("{home}/clm-bench/signet_forge.py"));
-    let python = std::env::var("SIGNET_PYTHON").unwrap_or(format!("{home}/clm-bench/clef/.venv-unsloth/bin/python"));
-    if !std::path::Path::new(&script).is_file() || !std::path::Path::new(&python).is_file() {
-        eprintln!("signet forge: need the model runtime");
-        eprintln!("  python: {python}");
-        eprintln!("  screen: {script}");
-        eprintln!("set SIGNET_PYTHON and SIGNET_FORGE if they live somewhere else");
-        std::process::exit(1);
-    }
+    let (python, script) = match setup::forge_runtime() {
+        Ok(pair) => pair,
+        Err(e) => { eprintln!("signet forge: {e}"); std::process::exit(1); }
+    };
     let err = Command::new(&python)
         .arg(&script)
         .args(rest)
@@ -103,12 +100,15 @@ fn main() {
     }
     let mode = args.get(1).map(String::as_str).filter(|a| !a.starts_with('-'));
 
+    if mode == Some("setup") {
+        std::process::exit(setup::run(&args[2..]));
+    }
     if mode == Some("forge") {
         exec_forge(&args[2..]);
     }
     if let Some(m) = mode {
         if m != "server" && m != "link" {
-            eprintln!("signet: unknown mode '{m}'. Expected server, link, or forge.");
+            eprintln!("signet: unknown mode '{m}'. Expected setup, server, link, or forge.");
             usage();
             std::process::exit(2);
         }
@@ -121,8 +121,8 @@ fn main() {
         let w = world.clone();
         std::thread::spawn(move || net::serve(w, &bind, token));
     } else {
-        let home = std::env::var("HOME").unwrap_or_default();
-        let script_path = opt("--lc-script").unwrap_or(format!("{home}/lc-analisis/lc_host_script.txt"));
+        let cfg = setup::load();
+        let script_path = opt("--lc-script").or_else(|| if cfg.lc_script.is_empty() { None } else { Some(cfg.lc_script.clone()) });
         let lc_port: u16 = opt("--lc-port").and_then(|p| p.parse().ok()).unwrap_or(7777);
         let server = opt("--server");
         banner::print("Signet Link");
@@ -135,10 +135,11 @@ fn main() {
         let forge = if has("--no-forge") { forge::Forge::off() } else { forge::Forge::start(opt("--forge").unwrap_or(forge::ADDR.into()), name.clone()) };
         if !has("--no-mc") { doors::mc::start(world.clone(), opt("--mc-bridge").unwrap_or(doors::mc::BRIDGE.into()), forge.clone()); }
         if has("--gmod") { doors::gmod::start(world.clone(), opt("--gmod-addr").unwrap_or(doors::gmod::ADDR.into()), forge.clone()); }
-        if !has("--no-lc") {
-            match doors::lc::load_script(&script_path) {
+        let want_lc = !has("--no-lc") && script_path.is_some();
+        if want_lc {
+            match doors::lc::load_script(script_path.as_deref().unwrap_or("")) {
                 Ok(s) => doors::lc::start(world.clone(), s, lc_port),
-                Err(e) => log("lethalcompany", &format!("door off: {e} (make it with ~/lc-analisis/host_script.py from a capture of your own LAN game)")),
+                Err(e) => log("lethalcompany", &format!("door off: {e} (pass --lc-script from a capture of your own LAN game; Signet does not ship one)")),
             }
         }
         if server.is_none() { load_world(&world, opt("--world")); }   // a local world can have its own ground too

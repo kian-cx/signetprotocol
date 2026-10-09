@@ -3,7 +3,7 @@
 //! client only sends its game version, no Steam identity. So nothing in the game has to change.
 //!
 //! Phase 1 (this file): Unity Transport + Netcode host side, and a host *script* replayed from a local capture of your
-//! own LAN game (~/lc-analisis/host_script.py): ConnectionApproved, the ship synchronisation, the lobby. TimeSync is
+//! own LAN game: ConnectionApproved, the ship synchronisation, the lobby. TimeSync is
 //! generated live. What the client sends is read: its player position/rotation become a universal entity.
 //! Phase 2 (next): spawn the other games' players in the ship from universal events (instead of only logging them).
 use super::{LC_SHIP_IN_WORLD, LC_SHIP_SPOT};

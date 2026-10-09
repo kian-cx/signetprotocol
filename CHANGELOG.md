@@ -4,6 +4,8 @@ All notable changes are listed here. The SDK follows [Semantic Versioning](https
 
 ## Unreleased
 
+- **`signet setup`** detects the OS and the GPU, then asks for server, client, or both. Server use downloads nothing. Client use downloads the decision model and can install the Python environment into the data directory (`$SIGNET_HOME` or `~/.local/share/signet`). No personal paths. The lab crate builds inside this workspace.
+
 - **Lab doors server** in `lab/server`: one binary, `signet`, with `server`, `link` and `forge`. Shared world in metres, one door per game, Forge asked on localhost. This wire is not the SDK Signet/1 protocol in `crates/signet-sdk`.
 - **Decision model** `signet-forge-dm-qwen35-0.8b-clef-distill-v1`: Qwen3.5-0.8B with Clef's joint head, distilled from Clef 27B. Weights via Git LFS. Model card in that directory. The Forge page on the site points at it.
 

@@ -1,2 +1,4 @@
 /target
+# never commit anything derived from a game (scripts, captures, catalogs)
+*.json
 *.pcap
