@@ -16,7 +16,13 @@ extern "C" fn on_signal(_: i32) {
     if STOP.swap(true, SeqCst) { unsafe { _exit(130) } }      // the second Ctrl-C: out now
 }
 
-pub fn install() { unsafe { signal(2, on_signal); signal(15, on_signal); } }   // SIGINT, SIGTERM
+pub fn install() {
+    unsafe {
+        signal(2, on_signal); // SIGINT, Ctrl-C on Linux, macOS and Windows
+        #[cfg(unix)]
+        signal(15, on_signal); // SIGTERM
+    }
+}
 
 pub fn requested() -> bool { STOP.load(SeqCst) }
 

@@ -1,5 +1,8 @@
 # Forge environment, installed only by: signet setup --role client --install-python
 # The decision model is downloaded separately (--download), about 1.8 GB.
+# The default torch wheel is enough to install the environment on Linux, macOS and Windows.
+# The lab speed (about 7 ms) needs an NVIDIA GPU and the matching CUDA wheel from pytorch.org.
+# macOS has no NVIDIA GPU; Link still runs and draws the neutral stand-in.
 rich
 torch
 transformers

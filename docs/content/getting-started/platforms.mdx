@@ -1,0 +1,118 @@
+---
+title: Linux, macOS and Windows
+description: What is the same on every system, and what each one needs so Signet behaves the same way.
+---
+
+import { Callout } from 'nextra/components'
+
+# Linux, macOS and Windows
+
+Signet is one protocol and one set of commands. A player on Windows, a player on Linux and a server on macOS speak the same messages. What changes is how you install the tools around the binary, not the world they join.
+
+There are two programs in this repository:
+
+- The **SDK server** (`servidor`, TCP 7777) is the public Signet/1 server. Docker is the same command on every system.
+- The **lab doors server** (`lab/server`, TCP 7800) is the shared world used with Minecraft, Garry's Mod and Lethal Company. Its binary is `signet`, with `setup`, `server`, `link` and `forge`.
+
+<Callout type="info">
+Docker images are Linux. On macOS and Windows, Docker Desktop runs that Linux image inside a small virtual machine. The published port on your machine is the same number either way.
+</Callout>
+
+## The same on all three
+
+| Piece | Value |
+|---|---|
+| Server command | `signet server --bind 127.0.0.1:7800` |
+| Client command | `signet link --server HOST:7800 --name PLAYER` |
+| First-run command | `signet setup --role server` or `--role client` |
+| Loopback | `127.0.0.1` for every door (Minecraft bridge 7790, Garry's Mod 7795, Forge 7796, Lethal Company UDP 7777) |
+| Shared secret | environment variable `SIGNET_TOKEN`, set on the server and on every Link |
+| World file | `worlds/plaza.txt`, next to the executable or passed with `--world` |
+| Model | downloaded into the data directory, about 1.8 GB, only if you pass `--download` |
+
+Build the lab binary on the system that will run it:
+
+```bash
+cd lab/server
+cargo build --release
+```
+
+The executable is `target/release/signet` on Linux and macOS, and `target\release\signet.exe` on Windows.
+
+## What each system needs
+
+| | Linux | macOS | Windows |
+|---|---|---|---|
+| To compile | Rust, a C toolchain (`build-essential` or the equivalent) | Rust, Xcode Command Line Tools | Rust, Visual Studio Build Tools (the MSVC linker) |
+| To run only the server | the binary, or Docker | the binary, or Docker Desktop | the binary, or Docker Desktop |
+| Data directory | `~/.local/share/signet` | `~/Library/Application Support/signet` | `%LOCALAPPDATA%\signet` |
+| Python for Forge | `python3`, plus `python3-venv` on Debian and Ubuntu | `python3` from python.org or Homebrew | `python` from python.org; enable **Add python.exe to PATH** |
+| Fetch the model | `curl`, or Python if `curl` is missing | `curl` is already there | `curl.exe` is already there since Windows 10 |
+| Forge on a GPU | NVIDIA driver | not available: Macs have no NVIDIA GPU | NVIDIA driver |
+| Firewall | nothing extra for localhost | nothing extra for localhost | if Windows asks, allow `signet.exe` on private networks for localhost |
+| Stop the process | Ctrl-C | Ctrl-C | Ctrl-C |
+
+`SIGNET_HOME` replaces the data directory on every system. `XDG_DATA_HOME` is also honored on Linux and macOS.
+
+## Server only
+
+Nothing heavy is installed. On all three:
+
+```bash
+signet setup --role server
+signet server --bind 127.0.0.1:7800
+```
+
+Check it with a one-line hello. On Linux and macOS:
+
+```bash
+printf 'HELLO\tsignet/1\tplayer\n' | nc 127.0.0.1 7800
+```
+
+On Windows, if `nc` is not installed, Python is enough:
+
+```powershell
+python -c "import socket;s=socket.create_connection(('127.0.0.1',7800));s.sendall(b'HELLO\tsignet/1\tplayer\n');print(s.recv(200))"
+```
+
+The first line back is `WELCOME`, then the plaza.
+
+## Client: Link and Forge
+
+```bash
+signet setup --role client --games minecraft,gmod --download
+signet setup --role client --install-python
+signet link --server HOST:7800 --name PLAYER
+```
+
+`--download` fetches the decision model into the data directory. `--install-python` creates a virtual environment there (`venv/bin` on Linux and macOS, `venv\Scripts` on Windows) and installs the Forge packages.
+
+The fast path of that model (about 7 ms) needs an NVIDIA GPU and the CUDA build of PyTorch. The default `torch` wheel installs on all three systems, but it does not use the GPU. On a machine with NVIDIA, install the wheel that matches your driver from [pytorch.org](https://pytorch.org) into that same virtual environment.
+
+On a Mac, `signet setup` says this plainly. The Link still runs. Until a Forge on a machine with an NVIDIA GPU answers, the doors draw the neutral stand-in (an armor stand or stone in Minecraft).
+
+## Games
+
+The games are not downloaded. Each door only listens on localhost, on every system:
+
+- **Minecraft.** A proto you run speaks `127.0.0.1:7790`. The official client joins that proto.
+- **Garry's Mod.** Copy `lab/server/gmod/signet` into the dedicated server's `addons`. Start the dedicated server with `-allowlocalhttp` and connect to `127.0.0.1:27015`.
+- **Lethal Company.** Off until you pass `--lc-script` pointing at a capture of your own LAN game. Then choose LAN and Join. The game always dials `127.0.0.1:7777`.
+
+## SDK server in Docker
+
+From the repository root, on Linux, macOS or Windows:
+
+```bash
+docker build -f servidor/Dockerfile -t signet-server .
+docker run -d --name signet -p 7777:7777 -e SIGNET_WORLD=signet:nexo signet-server
+```
+
+The lab server's image is separate, and it only hosts the shared world:
+
+```bash
+docker build -t signet-doors lab/server
+docker run -d --name signet-doors -p 127.0.0.1:7800:7800 signet-doors
+```
+
+Publish `7800` on `127.0.0.1` or on your own VPN address, not on a public one. That is the same rule on every system.

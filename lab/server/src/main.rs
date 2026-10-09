@@ -25,7 +25,6 @@ mod utp;
 mod wire;
 mod world;
 
-use std::os::unix::process::CommandExt;
 use std::process::Command;
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
@@ -77,13 +76,23 @@ fn exec_forge(rest: &[String]) -> ! {
         Ok(pair) => pair,
         Err(e) => { eprintln!("signet forge: {e}"); std::process::exit(1); }
     };
-    let err = Command::new(&python)
-        .arg(&script)
-        .args(rest)
-        .env("HF_HUB_OFFLINE", std::env::var("HF_HUB_OFFLINE").unwrap_or_else(|_| "1".into()))
-        .exec();
-    eprintln!("signet forge: cannot start {python}: {err}");
-    std::process::exit(1);
+    let mut cmd = Command::new(&python);
+    cmd.arg(&script).args(rest).env("HF_HUB_OFFLINE", std::env::var("HF_HUB_OFFLINE").unwrap_or_else(|_| "1".into()));
+    // On Unix the screen replaces this process. On Windows it runs as a child and we exit with its code.
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        let err = cmd.exec();
+        eprintln!("signet forge: cannot start {python}: {err}");
+        std::process::exit(1);
+    }
+    #[cfg(not(unix))]
+    {
+        match cmd.status() {
+            Ok(s) => std::process::exit(s.code().unwrap_or(1)),
+            Err(e) => { eprintln!("signet forge: cannot start {python}: {e}"); std::process::exit(1); }
+        }
+    }
 }
 
 fn main() {

@@ -11,8 +11,26 @@ Rust, standard library only (no downloads). One binary, `signet`, three modes:
 - **link**: runs on each player's PC, next to their game. Its doors listen on 127.0.0.1 only; its uplink talks to a
   Server with the Signet protocol (`src/wire.rs`: one universal event per tab-separated line over TCP).
 - **forge**: the decision screen on that same PC. Paths come from `signet setup`, kept in the data
-  directory (`$SIGNET_HOME`, else `$XDG_DATA_HOME/signet`, else `~/.local/share/signet`).
+  directory (`$SIGNET_HOME`, else `~/.local/share/signet` on Linux, `~/Library/Application Support/signet` on macOS, `%LOCALAPPDATA%\signet` on Windows).
 - **setup**: detects the system and records whether this machine is a server, a client, or both.
+
+## Platforms
+
+The wire, the ports and the commands are the same on Linux, macOS and Windows. Build with `cargo build --release` on the machine that will run it, or run the server in Docker (the image is Linux; Docker Desktop provides that on macOS and Windows).
+
+| | Linux | macOS | Windows |
+|---|---|---|---|
+| Server | binary or Docker | binary or Docker Desktop | binary or Docker Desktop |
+| Link | same binary, doors on `127.0.0.1` | same | same; allow `signet.exe` on localhost if the firewall asks |
+| Data directory | `~/.local/share/signet` | `~/Library/Application Support/signet` | `%LOCALAPPDATA%\signet` |
+| Override | `SIGNET_HOME` on all three | | |
+| Python for Forge | `python3` | `python3` | `python` or `python3` |
+| venv interpreter | `venv/bin/python` | `venv/bin/python` | `venv\Scripts\python.exe` |
+| Model download | `curl`, or Python if curl is absent | same | same (Windows 10 and later include `curl.exe`) |
+| Forge GPU | NVIDIA driver | no NVIDIA GPU; doors keep the neutral stand-in | NVIDIA driver |
+| Ctrl-C | stops and cleans up | same | same (Ctrl-C; closing the console is not a second signal) |
+
+`signet setup` prints which of these it found. Server mode never downloads the model. Client mode downloads it only with `--download`.
 
 ```
  player A's PC                                                          anywhere (this PC, LAN, cloud VM)

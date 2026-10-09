@@ -1,5 +1,6 @@
 //! First-run setup. No personal paths: everything lands in the data directory
-//! (`$SIGNET_HOME`, else `$XDG_DATA_HOME/signet`, else `~/.local/share/signet`).
+//! (`$SIGNET_HOME`, else the per-system data directory: `~/.local/share/signet` on Linux,
+//! `~/Library/Application Support/signet` on macOS, `%LOCALAPPDATA%\signet` on Windows).
 //!
 //! Server use needs only this binary and a world file.
 //! Client use (Link and Forge) additionally needs the decision model and a Python
@@ -37,16 +38,29 @@ impl Default for Config {
 }
 
 pub fn data_dir() -> PathBuf {
-    if let Ok(p) = std::env::var("SIGNET_HOME") {
-        if !p.is_empty() { return PathBuf::from(p); }
+    data_dir_in(std::env::consts::OS, &std::env::var("SIGNET_HOME").unwrap_or_default(), &std::env::var("XDG_DATA_HOME").unwrap_or_default(),
+        &std::env::var("HOME").unwrap_or_default(), &std::env::var("USERPROFILE").unwrap_or_default(), &std::env::var("LOCALAPPDATA").unwrap_or_default())
+}
+
+/// Where setup writes, given the OS name and the environment values. Empty strings mean unset.
+pub fn data_dir_in(os: &str, signet_home: &str, xdg: &str, home: &str, userprofile: &str, localappdata: &str) -> PathBuf {
+    if !signet_home.is_empty() { return PathBuf::from(signet_home); }
+    let home = if !home.is_empty() { home } else { userprofile };
+    match os {
+        "windows" => {
+            if !localappdata.is_empty() { return PathBuf::from(localappdata).join("signet"); }
+            if !home.is_empty() { return PathBuf::from(home).join("AppData").join("Local").join("signet"); }
+        }
+        "macos" => {
+            if !xdg.is_empty() { return PathBuf::from(xdg).join("signet"); }
+            if !home.is_empty() { return PathBuf::from(home).join("Library/Application Support/signet"); }
+        }
+        _ => {
+            if !xdg.is_empty() { return PathBuf::from(xdg).join("signet"); }
+            if !home.is_empty() { return PathBuf::from(home).join(".local/share/signet"); }
+        }
     }
-    if let Ok(p) = std::env::var("XDG_DATA_HOME") {
-        if !p.is_empty() { return PathBuf::from(p).join("signet"); }
-    }
-    if let Ok(h) = std::env::var("HOME") {
-        if !h.is_empty() { return PathBuf::from(h).join(".local/share/signet"); }
-    }
-    PathBuf::from("/tmp/signet")
+    std::env::temp_dir().join("signet")
 }
 
 fn config_path() -> PathBuf { data_dir().join("config") }
@@ -83,11 +97,24 @@ fn have(bin: &str) -> bool { which(bin).is_some() }
 
 fn which(bin: &str) -> Option<PathBuf> {
     let path = std::env::var_os("PATH")?;
+    let mut names = vec![bin.to_string()];
+    if cfg!(windows) {
+        for ext in [".exe", ".cmd", ".bat", ".EXE"] {
+            names.push(format!("{bin}{ext}"));
+        }
+    }
     for dir in std::env::split_paths(&path) {
-        let p = dir.join(bin);
-        if p.is_file() { return Some(p); }
+        for name in &names {
+            let p = dir.join(name);
+            if p.is_file() { return Some(p); }
+        }
     }
     None
+}
+
+/// `python3` on Linux and macOS, `python` on Windows when that is the name the installer used.
+fn python_bin() -> Option<PathBuf> {
+    which("python3").or_else(|| which("python"))
 }
 
 fn command_out(bin: &str, args: &[&str]) -> Option<String> {
@@ -130,19 +157,29 @@ fn copy_dir(from: &Path, to: &Path) -> io::Result<()> {
     Ok(())
 }
 
+fn http_get(url: &str, out: &Path) -> Result<(), String> {
+    if let Some(curl) = which("curl") {
+        let status = Command::new(curl).args(["-fsSL", "--retry", "2", "-o"]).arg(out).arg(url).status().map_err(|e| e.to_string())?;
+        if status.success() { return Ok(()); }
+        let _ = fs::remove_file(out);
+        return Err(format!("download failed: {url}"));
+    }
+    let python = python_bin().ok_or("neither curl nor Python is installed; one of them is needed to download the model")?;
+    let code = "import sys, urllib.request\nurllib.request.urlretrieve(sys.argv[1], sys.argv[2])\n";
+    let status = Command::new(python).args(["-c", code, url]).arg(out).status().map_err(|e| e.to_string())?;
+    if status.success() { return Ok(()); }
+    let _ = fs::remove_file(out);
+    Err(format!("download failed: {url}"))
+}
+
 fn download_model(dest: &Path) -> Result<(), String> {
-    let curl = which("curl").ok_or("curl is not installed; it is required to download the model")?;
     fs::create_dir_all(dest).map_err(|e| e.to_string())?;
     let base = model_base_url().trim_end_matches('/').to_string();
     for name in model_files() {
         let url = format!("{base}/{name}");
         let out = dest.join(&name);
         eprintln!("  downloading {name}");
-        let status = Command::new(&curl).args(["-fsSL", "--retry", "2", "-o"]).arg(&out).arg(&url).status().map_err(|e| e.to_string())?;
-        if !status.success() {
-            let _ = fs::remove_file(&out);
-            return Err(format!("download failed: {url}"));
-        }
+        http_get(&url, &out)?;
         if is_lfs_pointer(&out) {
             let _ = fs::remove_file(&out);
             return Err(format!("{name} came back as a Git LFS pointer, not the weights"));
@@ -151,18 +188,28 @@ fn download_model(dest: &Path) -> Result<(), String> {
     Ok(())
 }
 
+fn venv_python(venv: &Path) -> PathBuf {
+    if cfg!(windows) { venv.join("Scripts").join("python.exe") } else { venv.join("bin").join("python") }
+}
+
+fn venv_pip(venv: &Path) -> PathBuf {
+    if cfg!(windows) { venv.join("Scripts").join("pip.exe") } else { venv.join("bin").join("pip") }
+}
+
 fn install_python(data: &Path) -> Result<PathBuf, String> {
-    if !have("python3") { return Err("python3 is not installed".into()); }
+    let python = python_bin().ok_or("Python is not installed (python3 on Linux and macOS, python on Windows)")?;
     let venv = data.join("venv");
-    let status = Command::new("python3").args(["-m", "venv"]).arg(&venv).status().map_err(|e| e.to_string())?;
-    if !status.success() { return Err("python3 -m venv failed (install python3-venv)".into()); }
-    let pip = venv.join("bin/pip");
+    let status = Command::new(&python).args(["-m", "venv"]).arg(&venv).status().map_err(|e| e.to_string())?;
+    if !status.success() { return Err("python -m venv failed (on Debian/Ubuntu install python3-venv)".into()); }
+    let pip = venv_pip(&venv);
     let req = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("forge/requirements.txt");
     if req.is_file() {
         let status = Command::new(&pip).args(["install", "-r"]).arg(&req).status().map_err(|e| e.to_string())?;
         if !status.success() { return Err("pip install of the Forge environment failed".into()); }
     }
-    Ok(venv.join("bin/python"))
+    let py = venv_python(&venv);
+    if !py.is_file() { return Err(format!("venv did not create {}", py.display())); }
+    Ok(py)
 }
 
 fn ask(prompt: &str) -> String {
@@ -191,13 +238,20 @@ fn flags(args: &[String]) -> Flags {
 
 fn print_machine() {
     let gpu = if have("nvidia-smi") { command_out("nvidia-smi", &["--query-gpu=name", "--format=csv,noheader"]).unwrap_or_else(|| "NVIDIA GPU".into()) } else { "no NVIDIA GPU detected".into() };
-    let py = command_out("python3", &["--version"]).unwrap_or_else(|| "not installed".into());
+    let py = python_bin().and_then(|p| command_out(&p.to_string_lossy(), &["--version"])).unwrap_or_else(|| "not installed".into());
+    let fetch = if have("curl") { "curl" } else if python_bin().is_some() { "python (no curl)" } else { "missing (install curl or Python)" };
     println!("system:  {} {}", std::env::consts::OS, std::env::consts::ARCH);
     println!("gpu:     {gpu}");
-    println!("python3: {py}");
-    println!("curl:    {}", if have("curl") { "installed" } else { "missing (needed to download the model)" });
-    println!("docker:  {} (optional; only a way to run the server)", if have("docker") { "installed" } else { "not installed" });
+    println!("python:  {py}");
+    println!("fetch:   {fetch}");
+    println!("docker:  {} (optional; Docker Desktop on Windows and macOS)", if have("docker") { "installed" } else { "not installed" });
     println!("data:    {}", data_dir().display());
+    match std::env::consts::OS {
+        "linux" => println!("note:    server and Link are the same binary. Forge uses an NVIDIA GPU when one is present."),
+        "windows" => println!("note:    same commands as Linux. Allow signet.exe on localhost if the firewall asks. Forge uses an NVIDIA GPU."),
+        "macos" => println!("note:    server and Link match Linux. The decision model needs an NVIDIA GPU, which Macs do not have; doors use the neutral stand-in until a Forge with that GPU answers."),
+        _ => {}
+    }
 }
 
 fn print_plan(role: &str) {
@@ -319,6 +373,11 @@ mod tests {
         assert_eq!(got.role, "client");
         assert_eq!(got.games, vec!["gmod".to_string()]);
         assert_eq!(got.model, "m");
+        assert_eq!(data_dir_in("linux", "", "", "/home/a", "", ""), PathBuf::from("/home/a/.local/share/signet"));
+        assert_eq!(data_dir_in("macos", "", "", "/Users/a", "", ""), PathBuf::from("/Users/a/Library/Application Support/signet"));
+        assert_eq!(data_dir_in("windows", "", "", "", "C:/Users/a", "C:/Users/a/AppData/Local"), PathBuf::from("C:/Users/a/AppData/Local/signet"));
+        assert_eq!(data_dir_in("windows", "D:/signet", "", "", "", ""), PathBuf::from("D:/signet"));
+        assert_eq!(venv_python(Path::new("v")), if cfg!(windows) { PathBuf::from("v/Scripts/python.exe") } else { PathBuf::from("v/bin/python") });
         let _ = fs::remove_dir_all(&dir);
     }
 }
